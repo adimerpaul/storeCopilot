@@ -111,8 +111,8 @@ export default {
   data () {
     return {
       login: {
-        email: localStorage.getItem('remember_email') || '',
-        password: '',
+        email: localStorage.getItem('remember_email') || 'adimer101@gmail.com',
+        password: 'admin123Admin',
       },
       showPassword: false,
       loading: false,

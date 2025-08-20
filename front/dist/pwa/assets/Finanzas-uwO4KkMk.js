@@ -1,0 +1,1 @@
+import{Q as e}from"./QPage-BDJqaSDQ.js";import{_ as t,c as n,o,w as r,a3 as s}from"./index-CG2iN3_8.js";const c={};function f(_,a){return o(),n(e,null,{default:r(()=>a[0]||(a[0]=[s(" Finanzas ")])),_:1})}const d=t(c,[["render",f]]);export{d as default};
