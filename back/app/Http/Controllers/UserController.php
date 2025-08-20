@@ -4,11 +4,54 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller{
+    function updateMe(Request $request){
+        $u = $request->user();
+
+        $request->validate([
+            'name'      => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'email'     => 'required|email|unique:users,email,' . $u->id,
+            'language'  => 'nullable',
+            'avatar'    => 'nullable|image|mimes:jpg,jpeg,png|max:800', // 800 KB
+        ]);
+
+        $u->name      = $request->input('name', $u->name);
+        $u->last_name = $request->input('last_name', $u->last_name);
+        $u->email     = $request->input('email', $u->email);
+        $u->language  = $request->input('language', $u->language);
+
+        if ($request->hasFile('avatar')) {
+            // borra el anterior si existe
+            if ($u->avatar && Storage::disk('public')->exists($u->avatar)) {
+                Storage::disk('public')->delete($u->avatar);
+            }
+            // guarda nuevo
+            $file = $request->file('avatar');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $path = 'images/' . $filename;
+            $file->move(public_path('images'), $filename);
+            $u->avatar = $filename;
+        }
+
+        $u->save();
+
+        return response()->json([
+            'id'          => $u->id,
+            'name'        => $u->name,
+            'last_name'   => $u->last_name,
+            'email'       => $u->email,
+            'language'    => $u->language,
+            'avatar'      => $u->avatar,
+            'avatar_url'  => $u->avatar ? Storage::url($u->avatar) : null,
+            'permissions' => $u->getAllPermissions()->pluck('name'),
+        ]);
+    }
     public function updateAvatar(Request $request, $userId)
     {
         $user = User::find($userId);
@@ -39,8 +82,8 @@ class UserController extends Controller{
         return response()->json(['message' => 'No se ha enviado un archivo'], 400);
     }
     function login(Request $request){
-        $credentials = $request->only('username', 'password');
-        $user = User::where('username', $credentials['username'])->with('permissions:id,name')->first();
+        $credentials = $request->only('email', 'password');
+        $user = User::where('email', $credentials['email'])->with('permissions:id,name')->first();
         if (!$user || !password_verify($credentials['password'], $user->password)) {
             return response()->json([
                 'message' => 'Usuario o contraseña incorrectos',
