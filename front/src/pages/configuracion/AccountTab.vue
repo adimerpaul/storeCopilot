@@ -4,11 +4,12 @@
     <q-card class="soft-card q-pa-lg q-mb-md">
       <div class="row items-start q-col-gutter-lg">
         <!-- Avatar + subir imagen -->
-        <div class="col-12 col-md-4">
+        <div class="col-12">
           <div class="row items-center q-gutter-md">
             <q-avatar size="110px" class="bg-grey-3">
               <q-img v-if="previewUrl" :src="previewUrl" :ratio="1" />
-              <q-img v-else src="https://cdn.quasar.dev/img/avatar.png" :ratio="1" />
+              <q-img v-else-if="avatarUrl" :src="avatarUrl" :ratio="1" />
+              <q-icon v-else name="person" size="64px" class="text-grey-6" />
             </q-avatar>
 
             <div class="column">
@@ -16,13 +17,16 @@
                 color="deep-purple-5"
                 unelevated
                 no-caps
+                dense
                 class="q-px-lg q-py-xs"
                 label="Subir Imagen"
                 @click="pickFile"
+                :loading="loading"
               />
               <div class="text-caption text-grey-7 q-mt-sm">
                 Permitido JPG o PNG. Tamaño máximo 800K
               </div>
+
               <!-- File oculto -->
               <input
                 ref="fileEl"
@@ -71,20 +75,8 @@
             </div>
 
             <div class="row q-gutter-sm q-mt-md">
-              <q-btn
-                type="submit"
-                color="deep-purple-5"
-                unelevated
-                label="Guardar"
-                no-caps
-              />
-              <q-btn
-                flat
-                color="grey-7"
-                label="Cancelar"
-                no-caps
-                @click="onCancel"
-              />
+              <q-btn type="submit" color="deep-purple-5" unelevated label="Guardar" no-caps :loading="loading" />
+              <q-btn flat color="grey-7" label="Cancelar" no-caps @click="onCancel" :loading="loading" />
             </div>
           </q-form>
         </div>
@@ -101,6 +93,7 @@
 
       <div class="q-mt-md">
         <q-btn
+          :loading="loading"
           color="negative"
           :disable="!confirmDelete"
           unelevated
@@ -114,26 +107,52 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, onBeforeUnmount, onMounted, computed, getCurrentInstance } from 'vue'
+import { useQuasar } from 'quasar'
+import { useCounterStore } from 'stores/example-store'
 
+const $q = useQuasar()
+const { proxy } = getCurrentInstance()
+const store = useCounterStore()
+const loading = ref(false)
 
 const fileEl = ref(null)
 const previewUrl = ref(null)
+const selectedFile = ref(null)
 
+/* Prefill con datos del usuario en el store */
 const form = ref({
-  nombre: 'john',
-  apellidos: 'Doe',
-  email: 'johnDoe@example.com',
-  idioma: 'en'
+  nombre: '',
+  apellidos: '',
+  email: '',
+  idioma: 'es'
+})
+
+/* URL del avatar del backend:
+   - si backend devuelve avatar_url, úsala
+   - si solo devuelve avatar (ruta relativa), arma la URL con $url
+*/
+const avatarUrl = computed(() => {
+  const u = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : store.user || {}
+  if (u.avatar) return `${proxy.$url}/../images/${u.avatar}`
+  return null
 })
 
 const idiomas = [
-  { label: 'Español', value: 'es' },
-  { label: 'English', value: 'en' },
-  { label: 'Português', value: 'pt' }
+  { label: 'Español', value: 'Español' },
+  { label: 'English', value: 'English' },
+  { label: 'Português', value: 'Português' },
 ]
 
 const confirmDelete = ref(false)
+
+onMounted(() => {
+  const u = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : store.user || {}
+  form.value.nombre = u.name || u.nombre || ''
+  form.value.apellidos = u.last_name || u.apellidos || ''
+  form.value.email = u.email || ''
+  form.value.idioma = u.language || u.idioma || 'es'
+})
 
 function pickFile () {
   fileEl.value?.click()
@@ -144,10 +163,12 @@ function onFileChange (e) {
   if (!file) return
 
   if (file.size > 800 * 1024) {
-    this?.$q?.notify?.({ type: 'warning', message: 'Máximo 800 KB' })
+    $q.notify({ type: 'warning', message: 'Máximo 800 KB' })
     e.target.value = ''
     return
   }
+
+  selectedFile.value = file
 
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = URL.createObjectURL(file)
@@ -157,26 +178,68 @@ onBeforeUnmount(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
 })
 
+/* Enviar a Laravel (un solo endpoint /me que acepta multipart) */
 async function onSubmit () {
-  // TODO: integrar con tu API
-  // await this.$axios.put('/settings/account', { ...form.value, avatar: fileEl.value.files?.[0] })
-  this?.$q?.notify?.({ type: 'positive', message: 'Cuenta guardada' })
+  try {
+    loading.value = true
+    const fd = new FormData()
+    // fd.append('_method', 'PUT') // por compatibilidad Laravel cuando usas POST
+    fd.append('name', form.value.nombre)
+    fd.append('last_name', form.value.apellidos)
+    fd.append('email', form.value.email)
+    fd.append('language', form.value.idioma)
+    if (selectedFile.value) fd.append('avatar', selectedFile.value)
+
+    const { data } = await proxy.$axios.post('me', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    // Actualiza store y localStorage con lo que devuelva el backend
+    store.user = data
+    localStorage.setItem('user', JSON.stringify(data))
+    // refresca preview si te devuelven la nueva URL
+    // if (data.avatar_url) {
+    //   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+    //   previewUrl.value = data.avatar_url
+    // }
+    proxy.$alert.success('Datos actualizados correctamente')
+    loading.value = false
+  } catch (err) {
+    console.error(err)
+    loading.value = false
+    proxy.$alert.error(err.response?.data?.message || 'Error al actualizar datos')
+  }
 }
 
 function onCancel () {
-  // restablece/recarga valores reales según tu store
-  this?.$q?.notify?.({ type: 'info', message: 'Cambios cancelados' })
+  const u = store.user || {}
+  form.value.nombre = u.name || u.nombre || ''
+  form.value.apellidos = u.last_name || u.apellidos || ''
+  form.value.email = u.email || ''
+  form.value.idioma = u.language || u.idioma || 'es'
+  // resetea preview si cancelas
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+    previewUrl.value = null
+    selectedFile.value = null
+  }
+  // $q.notify({ type: 'info', message: 'Cambios cancelados' })
+  proxy.$alert.info('Cambios cancelados')
 }
 
 function onDelete () {
-  // TODO: llamada real de eliminación
-  this?.$q?.dialog?.({
+  $q.dialog({
     title: 'Eliminar cuenta',
     message: 'Esta acción es irreversible. ¿Deseas continuar?',
     ok: { label: 'Sí, eliminar', color: 'negative' },
     cancel: { label: 'Cancelar', flat: true }
-  }).onOk(() => {
-    this?.$q?.notify?.({ type: 'negative', message: 'Cuenta eliminada (demo)' })
+  }).onOk(async () => {
+    try {
+      await proxy.$axios.delete('me')
+      $q.notify({ type: 'negative', message: 'Cuenta eliminada (demo)' })
+    } catch (e) {
+      $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
+    }
   })
 }
 </script>

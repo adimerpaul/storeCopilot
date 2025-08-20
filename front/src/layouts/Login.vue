@@ -1,155 +1,102 @@
 <template>
-  <q-layout class="bg-green-blue" view="lHh Lpr lff">
+  <q-layout view="lHh Lpr lFf" class="bg-auth">
     <q-page-container>
-      <q-page class="flex flex-center">
-        <div class="row">
-          <div class="col-12 col-md-1"></div>
-          <div :class="`col-12 col-md-10 ${$q.screen.gt.sm ? 'q-pa-lg' : ''}`">
-            <q-card flat bordered class="q-ma-xs q-pa-none">
-              <q-card-section class="q-pa-none">
-                <div class="row">
-                  <!-- Carrusel izquierdo -->
-                  <div class="col-12 col-md-6">
-                    <div class="bg-fondo">
-                      <q-carousel
-                        v-model="slide"
-                        transition-prev="scale"
-                        transition-next="scale"
-                        swipeable
-                        animated
-                        infinite
-                        autoplay
-                        control-color="white"
-                        navigation
-                        padding
-                        arrows
-                        :height="$q.screen.gt.sm ? '600px' : '230px'"
-                        class="text-white shadow-1 rounded-borders bg-fondo"
-                        style="width: 100%;"
-                      >
-                        <q-carousel-slide
-                          v-for="(slide, index) in slides"
-                          :key="index"
-                          :name="slide.name"
-                          class="column no-wrap flex-center"
-                        >
-                          <q-icon :name="slide.icon" size="50px"/>
-                          <div class="text-center">
-                            <div class="q-mb-xs text-bold">{{ slide.title }}</div>
-                            <p class="text-caption">{{ slide.description }}</p>
-                          </div>
-                        </q-carousel-slide>
-                        <template v-slot:control>
-                          <q-carousel-control
-                            position="top-left"
-                            :offset="[5, 10]"
-                            class="text-white rounded-borders"
-                          >
-                            <img src="logo.png" width="70"/>
-                          </q-carousel-control>
-                        </template>
-                      </q-carousel>
-                    </div>
-                  </div>
-                  <!-- Formulario de login -->
-                  <div :class="'col-12 col-md-6 q-pa-md bg-white'">
-                    <q-form @submit.prevent="loginSubmit">
-                      <div class="row q-ma-md">
-                        <div class="col-12">
-                          <q-img
-                            src="logo.png"
-                            width="100px"
-                            class="q-mb-md"
-                            style="border-radius: 50%;"
-                          />
-                        </div>
-                        <div class="col-12">
-                          <div style="color: #005c2a" class="text-bold">Bienvenido a EBA</div>
-                          <div class="text-grey q-py-xs">
-                            Inicia sesión para acceder al sistema
-                          </div>
-                        </div>
-                        <div class="col-12">
-                          <label class="text-subtitle">Usuario</label>
-                          <q-input
-                            v-model="login.username"
-                            outlined
-                            type="text"
-                            placeholder="Usuario"
-                            :rules="[
-                              val => !!val || 'El usuario es requerido',
-                              val => val.length >= 3 || 'Debe tener al menos 3 caracteres'
-                            ]"
-                            dense
-                          />
-                        </div>
-                        <div class="col-12">
-                          <label class="text-subtitle">Contraseña</label>
-                          <q-input
-                            v-model="login.password"
-                            outlined
-                            :type="showPassword ? 'text' : 'password'"
-                            placeholder="Contraseña"
-                            dense
-                            :rules="[
-                              val => !!val || 'La contraseña es requerida',
-                            ]"
-                          >
-                            <template v-slot:append>
-                              <q-icon
-                                :name="showPassword ? 'visibility' : 'visibility_off'"
-                                @click.stop="showPassword = !showPassword"
-                                class="cursor-pointer"
-                              />
-                            </template>
-                          </q-input>
-                        </div>
-                        <div class="col-12">
-                          <q-checkbox
-                            v-model="remember"
-                            label="Recordar mi usuario"
-                            color="primary"
-                          />
-                        </div>
-                        <div class="col-12">
-                          <q-btn
-                            :loading="loading"
-                            :disable="loading"
-                            label="Iniciar sesión"
-                            color="positive"
-                            no-caps
-                            type="submit"
-                            class="full-width"
-                          />
-                        </div>
-                        <div class="col-12">
-                          <div class="text-center">
-                            <q-btn
-                              flat
-                              label="Olvidé mi contraseña"
-                              color="primary"
-                              no-caps
-                              :loading="loading"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </q-form>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-            <!-- Pie de página -->
-            <div class="text-center q-mt-sm">
-              <div class="text-caption text-white">
-                EBA © {{ new Date().getFullYear() }}. Todos los derechos reservados.
-              </div>
-              <div class="text-caption text-white">
-                Desarrollado por el equipo de EBA
+      <q-page class="column items-center justify-center q-pa-md">
+        <q-card class="auth-card soft-card q-pa-lg">
+          <!-- Logo + marca -->
+          <div class="column items-center q-mb-md">
+            <div class="row items-center q-gutter-sm q-mb-md">
+              <q-img src="logo.svg" width="40px" height="40px" class="rounded"/>
+
+              <div class="text-h6 q-mt-sm">
+                <span class="text-grey-8">Store</span><span class="text-weight-bold">Copilot</span>
               </div>
             </div>
           </div>
-          <div class="col-12 col-md-1"></div>
+
+          <!-- Título -->
+          <div class="text-h6 text-center q-mb-xs">¡Bienvenido! 👋</div>
+          <div class="text-caption text-center text-grey-7 q-mb-lg">
+            Por favor, inicia sesión en tu cuenta y comienza la aventura.
+          </div>
+
+          <!-- Form -->
+          <q-form @submit.prevent="loginSubmit" greedy>
+            <div class="q-mb-md">
+              <div class="text-caption text-grey-7 q-mb-xs">Correo electrónico o nombre de usuario</div>
+              <q-input
+                v-model="login.email"
+                outlined dense
+                type="email"
+                placeholder="admin@demo.com"
+                :rules="[v => !!v || 'El correo es requerido']"
+              />
+            </div>
+
+            <div class="q-mb-sm">
+              <div class="text-caption text-grey-7 q-mb-xs">Contraseña</div>
+              <q-input
+                v-model="login.password"
+                outlined dense
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="************"
+                :rules="[v => !!v || 'La contraseña es requerida']"
+              >
+                <template #append>
+                  <q-icon
+                    :name="showPassword ? 'visibility' : 'visibility_off'"
+                    class="cursor-pointer"
+                    @click="showPassword = !showPassword"
+                  />
+                </template>
+              </q-input>
+            </div>
+
+            <div class="row items-center justify-between q-my-sm">
+              <q-checkbox v-model="remember" dense label="Recuérdame" />
+              <q-btn
+                flat dense no-caps
+                color="primary"
+                label="¿Olvidaste tu contraseña?"
+                @click="$router.push('/forgot')"
+              />
+            </div>
+
+            <q-btn
+              type="submit"
+              color="deep-purple-5"
+              unelevated
+              no-caps
+              class="full-width q-my-sm"
+              :loading="loading"
+              :disable="loading"
+              label="Iniciar Sesión"
+            />
+
+            <div class="text-caption text-center text-grey-8 q-mt-sm">
+              ¿Eres nuevo en nuestra plataforma?
+              <q-btn flat no-caps dense color="primary" label="Crea una cuenta" @click="$router.push('/register')" />
+            </div>
+
+            <q-separator spaced />
+
+            <div class="row items-center justify-center text-grey-6 q-mb-sm">o</div>
+
+            <!-- Google -->
+            <q-btn
+              outline no-caps class="full-width"
+              :href="googleUrl" type="a"
+            >
+              <template #default>
+                <img :src="googleIcon" alt="Google" width="18" class="q-mr-sm">
+                Continuar con Google
+              </template>
+            </q-btn>
+          </q-form>
+        </q-card>
+
+        <div class="text-caption text-grey-6 q-mt-md">
+          © {{ new Date().getFullYear() }}. Todos los derechos reservados.
         </div>
       </q-page>
     </q-page-container>
@@ -157,94 +104,75 @@
 </template>
 
 <script>
-import {useCounterStore} from "stores/example-store.js";
+import { useCounterStore } from 'stores/example-store'
 
 export default {
   name: 'Login',
-  data() {
+  data () {
     return {
-      slide: 'calidad',
-      slides: [
-        {
-          name: 'calidad',
-          icon: 'verified',
-          title: 'Calidad Certificada',
-          description: 'Nuestros productos cumplen los más altos estándares de calidad.'
-        },
-        {
-          name: 'trazabilidad',
-          icon: 'qr_code',
-          title: 'Trazabilidad Garantizada',
-          description: 'Sigue el recorrido de nuestros productos desde el origen.'
-        },
-        {
-          name: 'innovacion',
-          icon: 'lightbulb',
-          title: 'Innovación Constante',
-          description: 'Incorporamos tecnología para optimizar nuestros procesos.'
-        },
-        {
-          name: 'sostenibilidad',
-          icon: 'eco',
-          title: 'Producción Sostenible',
-          description: 'Comprometidos con el medio ambiente y el desarrollo local.'
-        },
-        {
-          name: 'seguridad',
-          icon: 'lock',
-          title: 'Seguridad y Confianza',
-          description: 'Protegemos tus datos y transacciones en todo momento.'
-        }
-      ],
       login: {
-        username: '',
+        email: localStorage.getItem('remember_email') || '',
         password: '',
       },
       showPassword: false,
       loading: false,
-      remember: false,
-    };
+      remember: !!localStorage.getItem('remember_email'),
+      googleIcon: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg', // ícono rápido
+    }
+  },
+  computed: {
+    googleUrl () {
+      // adapta a tu backend Laravel (ruta de OAuth)
+      return `${this.$url}/auth/google/redirect`
+    }
   },
   methods: {
-    loginSubmit() {
-      this.loading = true;
-      this.$axios.post('login', {
-        username: this.login.username,
-        password: this.login.password,
-      }).then(response => {
-        this.$store.isLogged = true;
-        this.$store.user = response.data.user;
-        this.$axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
-        localStorage.setItem('tokenEBA', response.data.token);
-        useCounterStore().permissions = (response.data.user.permissions || []).map(p => p.name)
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        this.$alert.success('Bienvenido ' + response.data.user.name);
-        this.$router.push('/');
-      }).catch(error => {
-        this.loading = false;
-        this.$alert.error(error.response?.data?.message || 'Error de conexión');
-      }).finally(() => {
-        this.loading = false;
-      });
-    },
-  },
-};
+    async loginSubmit () {
+      try {
+        this.loading = true
+
+        // --- LOGIN POR CORREO ---
+        const { data } = await this.$axios.post('login', {
+          email: this.login.email,          // <--- ahora es email
+          password: this.login.password
+        })
+
+        // Guardar sesión
+        this.$store.isLogged = true
+        this.$store.user = data.user
+        this.$axios.defaults.headers.common.Authorization = `Bearer ${data.token}`
+        localStorage.setItem('tokenEBA', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        useCounterStore().permissions = (data.user.permissions || []).map(p => p.name)
+
+        // Remember email
+        if (this.remember) localStorage.setItem('remember_email', this.login.email)
+        else localStorage.removeItem('remember_email')
+
+        this.$alert.success(`Bienvenido ${data.user.name || ''}`)
+        this.$router.push('/')
+      } catch (err) {
+        this.$alert.error(err.response?.data?.message || 'Credenciales inválidas')
+      } finally {
+        this.loading = false
+      }
+    }
+  }
+}
 </script>
 
-<style>
-.bg-green-blue {
-  background-image: linear-gradient(to bottom right, rgba(12, 202, 176, 0.7), rgba(64, 81, 137, 0.7)),
-  url('./../cover-pattern.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+<style scoped>
+.bg-auth {
+  background: #f6f5fb; /* gris muy claro como el mock */
 }
-
-.bg-fondo {
-  background-image: linear-gradient(to bottom right, rgba(64, 81, 137, 0.7)),
-  url('./../auth-one-bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+.auth-card {
+  width: 100%;
+  max-width: 420px;       /* tarjeta compacta centrada */
+}
+.soft-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(17,16,62,.06);
 }
 </style>
